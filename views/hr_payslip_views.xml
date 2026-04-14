@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Muestra la moneda del recibo en el encabezado del formulario.
+         En Odoo estándar currency_id existe pero no siempre está visible.
+         Esto hace explícita la moneda para el usuario/auditor. -->
+    <record id="hr_payslip_view_form_currency" model="ir.ui.view">
+        <field name="name">hr.payslip.form.currency</field>
+        <field name="model">hr.payslip</field>
+        <field name="inherit_id" ref="hr_payroll.hr_payslip_view_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Agrega indicador de moneda junto al período del recibo -->
+            <xpath expr="//field[@name='date_from']" position="after">
+                <field name="currency_id"
+                       string="Moneda"
+                       readonly="1"
+                       options="{'no_create': True, 'no_open': True}"
+                       widget="many2one"/>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>
