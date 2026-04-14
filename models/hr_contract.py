@@ -18,28 +18,6 @@ class HrContract(models.Model):
         ),
     )
 
-    # ── Override del campo relacionado de Odoo ──────────────────────────────
-    #
-    # En Odoo estándar:
-    #   currency_id = fields.Many2one(related='company_id.currency_id', readonly=True)
-    #
-    # Lo reemplazamos por un campo computed+stored para que tome el valor de
-    # wage_currency_id en lugar de la moneda de la empresa.
-    #
-    # IMPORTANTE: `related=None` es necesario en Odoo 18. Sin él, el ORM
-    # hereda el `related='company_id.currency_id'` del padre y lo mantiene
-    # activo aunque definamos `compute`, impidiendo que nuestro método se ejecute.
-    #
-    currency_id = fields.Many2one(
-        comodel_name='res.currency',
-        string='Moneda',
-        related=None,
-        compute='_compute_currency_id',
-        store=True,
-        precompute=True,
-        readonly=False,
-    )
-
     # ── Métodos ─────────────────────────────────────────────────────────────
 
     def _default_wage_currency(self):
@@ -47,14 +25,38 @@ class HrContract(models.Model):
         ars = self.env.ref('base.ARS', raise_if_not_found=False)
         return ars or self.env.company.currency_id
 
-    @api.depends('wage_currency_id', 'company_id.currency_id')
-    def _compute_currency_id(self):
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._force_currency_from_wage()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        if 'wage_currency_id' in vals:
+            self._force_currency_from_wage()
+        return res
+
+    def _force_currency_from_wage(self):
         """
-        currency_id sigue a wage_currency_id.
-        Fallback: moneda de la empresa (comportamiento estándar de Odoo).
+        Sincroniza currency_id con wage_currency_id usando SQL directo.
+
+        En Odoo 18 no es posible redefinir un campo `related` almacenado
+        mediante herencia sin que el atributo `related` del padre persista
+        y bloquee el compute. El enfoque SQL bypasea el ORM (y sus
+        restricciones contables) actualizando directamente la columna
+        almacenada en la tabla, que es lo que hr.payslip.currency_id lee.
+
+        No afecta la contabilidad: el ORM no recomputa un campo related
+        almacenado a menos que cambien sus dependencias declaradas
+        (company_id.currency_id), que en este caso no cambia.
         """
         for contract in self:
-            contract.currency_id = (
-                contract.wage_currency_id
-                or contract.company_id.currency_id
-            )
+            target = contract.wage_currency_id or contract.company_id.currency_id
+            if target:
+                self.env.cr.execute(
+                    "UPDATE hr_contract SET currency_id = %s WHERE id = %s",
+                    (target.id, contract.id),
+                )
+        # Limpiar cache para que la próxima lectura venga de la DB
+        self.invalidate_recordset(['currency_id'])
