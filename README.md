@@ -160,9 +160,17 @@ payroll_ar_currency/
 │   ├── __init__.py
 │   └── test_payroll_ar_currency.py   6 tests unitarios
 └── views/
-    ├── hr_contract_views.xml         campo en formulario de contrato
-    └── hr_payslip_views.xml          moneda en encabezado de recibo
+    └── hr_contract_views.xml         campo en formulario de contrato
 ```
+
+> **Nota:** `hr_payslip_views.xml` no está activo porque el XML ID del formulario de recibos
+> (`hr_payroll.hr_payslip_view_form`) puede variar entre versiones de Odoo 18.
+> La moneda del recibo es visible siempre a través de los campos del contrato asociado.
+> Si querés activar el indicador de moneda en el recibo, verificá el ID correcto con:
+> ```sql
+> SELECT res_id, name FROM ir_ui_view WHERE name ILIKE '%payslip%form%';
+> ```
+> Luego actualizá `inherit_id` en `views/hr_payslip_views.xml` y agregalo al `data` del manifest.
 
 ---
 

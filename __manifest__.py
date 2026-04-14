@@ -21,7 +21,6 @@
     'depends': ['hr_payroll', 'hr_payroll_account'],
     'data': [
         'views/hr_contract_views.xml',
-        'views/hr_payslip_views.xml',
     ],
     'post_init_hook': 'post_init_hook',
     'installable': True,
