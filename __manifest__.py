@@ -1,6 +1,6 @@
 {
     'name': 'Nómina en Moneda Secundaria (AR)',
-    'version': '18.0.1.0.0',
+    'version': '18.0.1.0.1',
     'summary': 'Permite liquidar sueldos en ARS cuando la empresa opera en USD',
     'description': """
         Extiende hr.contract con el campo wage_currency_id para que la moneda

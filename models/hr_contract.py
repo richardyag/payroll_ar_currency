@@ -25,12 +25,15 @@ class HrContract(models.Model):
     #
     # Lo reemplazamos por un campo computed+stored para que tome el valor de
     # wage_currency_id en lugar de la moneda de la empresa.
-    # Al estar stored=True, hr.payslip.currency_id (related: contract_id.currency_id)
-    # lo lee correctamente sin cambios adicionales en el modelo de recibos.
+    #
+    # IMPORTANTE: `related=None` es necesario en Odoo 18. Sin él, el ORM
+    # hereda el `related='company_id.currency_id'` del padre y lo mantiene
+    # activo aunque definamos `compute`, impidiendo que nuestro método se ejecute.
     #
     currency_id = fields.Many2one(
         comodel_name='res.currency',
         string='Moneda',
+        related=None,
         compute='_compute_currency_id',
         store=True,
         precompute=True,
