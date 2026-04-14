@@ -24,13 +24,5 @@ def migrate(cr, version):
     """)
     _logger.info("payroll_ar_currency: actualizados %d contratos (currency_id → ARS)", cr.rowcount)
 
-    # 2. Recibos: currency_id = currency del contrato asociado
-    cr.execute("""
-        UPDATE hr_payslip hp
-        SET    currency_id = c.wage_currency_id
-        FROM   hr_contract c
-        WHERE  hp.contract_id = c.id
-          AND  c.wage_currency_id IS NOT NULL
-          AND  hp.currency_id IS DISTINCT FROM c.wage_currency_id
-    """)
-    _logger.info("payroll_ar_currency: actualizados %d recibos (currency_id → ARS)", cr.rowcount)
+    # hr_payslip.currency_id es un campo related sin store en Odoo 18 —
+    # no existe como columna en la tabla, se calcula desde el contrato.

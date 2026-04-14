@@ -36,18 +36,4 @@ def post_init_hook(env):
     )
     _logger.info('payroll_ar_currency: currency_id sincronizado en %d contratos.', env.cr.rowcount)
 
-    # Paso 3: recibos existentes — currency_id = moneda del contrato
-    env.cr.execute(
-        """
-        UPDATE hr_payslip hp
-        SET    currency_id = c.wage_currency_id
-        FROM   hr_contract c
-        WHERE  hp.contract_id = c.id
-          AND  c.wage_currency_id IS NOT NULL
-          AND  hp.currency_id IS DISTINCT FROM c.wage_currency_id
-        """
-    )
-    _logger.info('payroll_ar_currency: currency_id sincronizado en %d recibos.', env.cr.rowcount)
-
     env['hr.contract'].invalidate_model(['currency_id'])
-    env['hr.payslip'].invalidate_model(['currency_id'])
